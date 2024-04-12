@@ -389,6 +389,7 @@ int nccl_ofi_ofiutils_init_connection(int api_version, struct fi_info *info, str
  */
 void nccl_ofi_ofiutils_ep_release(struct fid_ep *ep, struct fid_av *av, struct fid_cq *cq, int dev_id)
 {
+	NCCL_OFI_WARN("nccl_ofi_ofiutils_ep_release: ok before closing ep\n");
 	if (ep)
 		fi_close((fid_t)ep);
 
@@ -398,6 +399,7 @@ void nccl_ofi_ofiutils_ep_release(struct fid_ep *ep, struct fid_av *av, struct f
 	if (cq)
 		fi_close((fid_t)cq);
 
+	NCCL_OFI_WARN("nccl_ofi_ofiutils_ep_release: ok after closing cq\n");
 	NCCL_OFI_TRACE(NCCL_NET, "Libfabric endpoint and address vector of dev #%d is released", dev_id);
 }
 
