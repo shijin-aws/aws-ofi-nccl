@@ -5462,7 +5462,6 @@ static int release_ep(nccl_net_ofi_ep_t *base_ep)
 		ret = -ret;
 	}
 
-	NCCL_OFI_WARN("release_ep finishes with ret %d\n", ret);
  exit:
 	return ret;
 }
