@@ -4717,6 +4717,7 @@ static int blocked_send_close(nccl_net_ofi_send_comm_t *send_comm)
 
 	ret = send_close(s_comm);
 
+	NCCL_OFI_WARN("blocked_send_close returns %d\n", ret);
 	return ret;
 }
 

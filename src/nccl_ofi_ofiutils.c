@@ -398,6 +398,7 @@ void nccl_ofi_ofiutils_ep_release(struct fid_ep *ep, struct fid_av *av, struct f
 	if (cq)
 		fi_close((fid_t)cq);
 
+	NCCL_OFI_WARN("nccl_ofi_ofiutils_ep_release finishes\n");
 	NCCL_OFI_TRACE(NCCL_NET, "Libfabric endpoint and address vector of dev #%d is released", dev_id);
 }
 
