@@ -315,6 +315,56 @@ static inline nccl_net_ofi_rdma_domain_rail_t *rdma_domain_get_rail(nccl_net_ofi
 }
 
 
+static inline uint64_t rdtsc() {
+    unsigned int lo, hi;
+    __asm__ __volatile__ (
+        "rdtsc"
+        : "=a"(lo), "=d"(hi)
+    );
+    return ((uint64_t)hi << 32) | lo;
+}
+
+static uint64_t start_ts_rdtsc;
+static void start_time_rdtsc() {
+       start_ts_rdtsc = rdtsc();
+}
+
+#define WIN_SHIFT  (18)
+#define WIN_MASK  ((1 << WIN_SHIFT) - 1)
+static void end_time_rdtsc() {
+    static uint64_t total_ns = 0;
+    static uint32_t sample_count = 0;
+    static uint64_t max = 0, min = 0xFFFFFFFF;
+    uint64_t end;
+
+    end = rdtsc();
+
+    uint64_t diff_ns =  (end - start_ts_rdtsc);
+
+    if (diff_ns > 2000) {
+          return;
+    }
+
+    total_ns += diff_ns;
+	sample_count++;
+
+    if (diff_ns > max)
+           max = diff_ns;
+    if (diff_ns < min) 
+           min = diff_ns;
+
+    if ((sample_count & WIN_MASK) == 0) {
+       uint64_t avg = total_ns >> WIN_SHIFT;
+       uint64_t time = (avg * 1000) / 2400;
+
+        printf("Average time over %u samples: %lu cycles %lu nsec min %lu max %lu\n", sample_count, avg, time, min, max);
+        sample_count = 0;
+        total_ns = max = 0;
+       min = 0xFFFFFFFF;
+    }
+}
+
+
 /*
  * @brief	Write topology to NCCL topology file
  *
@@ -1702,7 +1752,10 @@ static int ofi_process_cq_rail(nccl_net_ofi_rdma_device_t *device, nccl_net_ofi_
 
 	while (true) {
 		/* Receive completions for the given endpoint */
+		start_time_rdtsc();
 		rc = fi_cq_read(rail->cq, cqe_buffers, cq_read_count);
+		if (rc == -FI_EAGAIN)
+			end_time_rdtsc();
 		if (rc > 0) {
 			ret = rdma_process_completions(cqe_buffers, rc, device, rail->rail_id);
 			if (OFI_UNLIKELY(ret != 0))
